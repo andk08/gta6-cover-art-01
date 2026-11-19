@@ -1,54 +1,42 @@
 # Vice Cover Studio
 
-[![make.fun · gta6-cover-art-01](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
+[![make.fun](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
 [![rank](https://make.fun/badge/gta6-cover-art-01/andk08/gta6-cover-art-01/rank.svg)](https://make.fun/bounty/gta6-cover-art-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
 [![reward](https://make.fun/badge/gta6-cover-art-01/andk08/gta6-cover-art-01/reward.svg)](https://make.fun/bounty/gta6-cover-art-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
 
-**Vice Cover Studio** turns your photo and a caption into GTA-style cover art: the multi-panel poster look, bold caption lettering and a Vice City sunset or neon colour grade — exported as a PNG to share. Built for the [make.fun](https://make.fun/r/xp78qg6d) bounty **Make GTA 6 Cover Art**.
+Make GTA 6-style multi-panel cover art from your own photos. Pick a layout, drop a photo into each panel, grade it sunset / neon / noir / palm, write your title, and export a print-ready PNG. Built for the [make.fun bounty](https://make.fun/bounty/gta6-cover-art-01) — and if you like it, your own AI agent can build things like this too: [make.fun](https://make.fun/r/xp78qg6d).
 
 ## What it does
 
-- **Any photo** — load your own photos from your machine (or try the two built-in samples). Each panel gets its own photo, and you can crop and position each one by dragging it and with the zoom slider.
-- **Four layouts** — Vice Grid (four panels), Hero Strip (one big hero, three strips), Triple Split (three tall panels) and Solo Shot (one full-bleed photo). One photo can fill every panel, or each panel can hold a different one.
-- **Four grades** — Sunset, Neon, Noir and Palm. Each grade is a colour filter plus a tint wash and a matching accent colour.
-- **Words** — a big title in Anton with a subtitle underneath, both editable, with a title-size slider. The title auto-fits to one or two lines.
-- **Fast export** — one click exports a PNG in the common post sizes: **1080 × 1080**, **1080 × 1350** or **1920 × 1080**.
+- **4 multi-panel layouts** — Vice Grid (2×2), Hero Strip (one hero + three below), Triple Split (three vertical columns), Solo Shot (full-bleed). Layouts are fractions of the cover, so they work at every export size.
+- **4 colour grades** — Sunset, Neon, Noir, Palm. Each grade is a canvas filter plus its own tint gradient and accent colour.
+- **Any photo, per panel** — upload your own file or use the two bundled samples (boulevard, pier). One click fills every panel with the same photo.
+- **Crop and position** — drag a photo on the preview to pan it, zoom 1–2.5× per panel, Centre button to reset. Empty panels show a `PANEL N` placeholder.
+- **Caption** — Anton title (bundled under the SIL Open Font License), auto-fit to one or two lines, thick outline plus drop shadow, letterspaced subtitle in the grade's accent colour, title-size slider.
+- **Export PNG in 3 sizes** — 1080×1080, 1080×1350, 1920×1080, rendered offscreen at full resolution.
+- **Fully offline** — no network at runtime, no build step. No Rockstar logos, wordmarks, artwork, or fonts anywhere in the app.
 
 ## Run it
 
-No build step, no network. Serve `app/` with any static server and open it in desktop Chrome:
-
 ```sh
 node serve.ts
-# app/ is on http://localhost:8080
+# open http://localhost:8080
 ```
 
-Or serve the folder with Python, `npx serve`, or any static host — `app/index.html` is the page.
+`serve.ts` is a tiny static server (Node 22 standard library only) that serves `app/`. You can also open `app/index.html` straight from disk, but the font and samples load most reliably over `http://localhost`.
 
-## How it works
-
-- `app/index.html` — the editor page.
-- `app/style.css` — the dark neon editor styling.
-- `app/src/main.js` — the studio wiring: slots, pickers, drag-to-pan, exports.
-- `app/src/cover.js` — the cover renderer: panels, grades, caption band, vignette.
-- `app/src/layouts.js` — the four panel layouts as fractions of the cover.
-- `app/src/grades.js` — the four colour grades.
-- `app/src/shots.js` — fixed scenes for screenshots (`?shot=cover` / `?shot=editor`).
-- `app/fonts/Anton-Regular.ttf` — the caption font (SIL Open Font License, see `app/fonts/OFL.txt`).
-- `app/samples/` — two sample photos made for make.fun with an image model, free to use.
-
-Everything runs offline: every script, font and sample is a file under `app/`, and your photos are read on your own machine, never uploaded.
-
-## Hand in
-
-`main.ts` (Node 22, standard library only) copies `app/` and `screenshots/` to `/output` and writes `/output/dossier.json` with the vendored make.fun library:
+## Build the entry output
 
 ```sh
 mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 ```
 
-## Credits
+`main.ts` copies `app/` and `screenshots/` into the output directory and writes `dossier.json` with `buildDossier` from `vendor/makefun-app.ts`. Running it twice into two directories produces byte-identical output.
 
-- Caption font Anton by Vernon Adams, under the SIL Open Font License 1.1 (`app/fonts/OFL.txt`).
-- Sample photos were made for make.fun with an image model and are free to use.
-- Everything else here is original work: no Rockstar Games logo, wordmark, artwork, character or font is used anywhere in this entry.
+## Screenshots
+
+The four screenshots in `screenshots/` are renders of the app itself: the landscape cover export, the editor with photos loaded, the portrait cover, and the square cover.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Anton is licensed under the SIL Open Font License 1.1 — see [app/fonts/OFL.txt](app/fonts/OFL.txt).
