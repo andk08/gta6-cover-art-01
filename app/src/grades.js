@@ -1,44 +1,47 @@
-// Vice Cover Studio — colour grades. Each grade is a canvas filter applied
-// to the photos, a diagonal tint laid over them, an accent colour used for
-// the subtitle and the selection ring, and the dark background behind the
-// panel gutters.
-export const GRADES = {
+// Vice Cover Studio — colour grades.
+//
+// A grade is a canvas filter applied to every photo, a diagonal tint washed
+// over the whole cover, and the accent colours the caption is drawn in.
+'use strict';
+
+var VC = window.VC || (window.VC = {});
+
+const GRADES = {
   sunset: {
     name: 'Sunset',
-    blurb: 'Warm orange-magenta dusk',
-    filter: 'saturate(1.35) contrast(1.08) sepia(0.28) hue-rotate(-10deg)',
-    tint: ['rgba(255, 94, 0, 0.30)', 'rgba(255, 0, 128, 0.24)'],
-    accent: '#ff5e3a',
-    dark: '#160a24',
+    filter: 'saturate(1.45) contrast(1.08) sepia(0.28) brightness(1.04)',
+    tint: ['#ff7a18', '#ff2d78'],
+    tintAlpha: 0.22,
+    accent: '#ffb347',
+    sub: '#ffd166',
   },
   neon: {
     name: 'Neon',
-    blurb: 'Electric cyan-magenta night',
-    filter: 'saturate(1.7) contrast(1.12) brightness(1.06)',
-    tint: ['rgba(0, 255, 255, 0.20)', 'rgba(255, 0, 255, 0.22)'],
-    accent: '#00e5ff',
-    dark: '#0a0618',
+    filter: 'saturate(1.9) contrast(1.18) brightness(1.02)',
+    tint: ['#7c3aed', '#06b6d4'],
+    tintAlpha: 0.26,
+    accent: '#22d3ee',
+    sub: '#67e8f9',
   },
   noir: {
     name: 'Noir',
-    blurb: 'Black-and-white contrast',
-    filter: 'grayscale(1) contrast(1.28) brightness(0.92)',
-    tint: ['rgba(0, 0, 0, 0.28)', 'rgba(255, 255, 255, 0.08)'],
-    accent: '#e8e8e8',
-    dark: '#000000',
+    filter: 'grayscale(1) contrast(1.3) brightness(0.92)',
+    tint: ['#111111', '#555555'],
+    tintAlpha: 0.18,
+    accent: '#f5f5f5',
+    sub: '#d4d4d4',
   },
   palm: {
     name: 'Palm',
-    blurb: 'Tropical green-gold day',
-    filter: 'saturate(1.25) contrast(1.05) hue-rotate(-16deg) brightness(1.07)',
-    tint: ['rgba(0, 200, 120, 0.22)', 'rgba(255, 214, 0, 0.16)'],
-    accent: '#7dff5e',
-    dark: '#06231a',
+    filter: 'saturate(1.3) contrast(1.06) brightness(1.07) hue-rotate(-6deg)',
+    tint: ['#0d9488', '#a3e635'],
+    tintAlpha: 0.2,
+    accent: '#bef264',
+    sub: '#a3e635',
   },
 };
 
-export const GRADE_IDS = Object.keys(GRADES);
+const GRADE_ORDER = ['sunset', 'neon', 'noir', 'palm'];
 
-export function gradeOf(id) {
-  return GRADES[id] ?? GRADES.sunset;
-}
+VC.GRADES = GRADES;
+VC.GRADE_ORDER = GRADE_ORDER;

@@ -1,77 +1,70 @@
-// A tiny static server for app/ (Node 22, standard library only), so the
-// studio can be tried locally without a build step:
-//   node serve.ts            serves app/ on http://localhost:8080
-//   node serve.ts --port 9000
-// It only ever serves files from inside app/, and answers 404 for anything
-// else. A development convenience, not a server for the internet.
-
-import { createReadStream, statSync } from 'node:fs';
+// Vice Cover Studio — tiny static file server for local development.
+//
+// Serves app/ on http://localhost:8080 (or $PORT when set) so the cover
+// maker can be tried in a desktop browser with no build step and no network.
+// Run it from the repository root: `node serve.ts`
 import { createServer } from 'node:http';
-import { extname, join, normalize, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { extname, join, normalize, resolve } from 'node:path';
 
-const appRoot = resolve(fileURLToPath(new URL('./app', import.meta.url)));
+const ROOT = resolve(new URL('./app', import.meta.url).pathname);
+const PORT = Number(process.env.PORT || 8080);
 
-function portFromArgs() {
-  const flag = process.argv.indexOf('--port');
-  const wanted = flag === -1 ? 8080 : Number(process.argv[flag + 1]);
-  return Number.isInteger(wanted) && wanted > 0 && wanted < 65536 ? wanted : 8080;
+const TYPES: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.txt': 'text/plain; charset=utf-8',
+};
+
+function safePath(urlPath: string): string | null {
+  const decoded = decodeURIComponent(urlPath.split('?')[0]);
+  const rel = normalize(decoded).replace(/^(\.\.[/\\])+/, '');
+  const full = join(ROOT, rel);
+  if (!full.startsWith(ROOT)) return null;
+  return full;
 }
 
-function mimeFor(file) {
-  const types = {
-    '.html': 'text/html; charset=utf-8',
-    '.js': 'text/javascript; charset=utf-8',
-    '.mjs': 'text/javascript; charset=utf-8',
-    '.css': 'text/css; charset=utf-8',
-    '.json': 'application/json; charset=utf-8',
-    '.png': 'image/png',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.webp': 'image/webp',
-    '.svg': 'image/svg+xml',
-    '.woff2': 'font/woff2',
-    '.woff': 'font/woff',
-    '.ttf': 'font/ttf',
-    '.otf': 'font/otf',
-    '.txt': 'text/plain; charset=utf-8',
-  };
-  return types[extname(file).toLowerCase()] ?? 'application/octet-stream';
-}
-
-const server = createServer((request, response) => {
-  const url = new URL(request.url ?? '/', 'http://localhost');
-  let pathname;
-  try {
-    pathname = decodeURIComponent(url.pathname);
-  } catch {
-    response.writeHead(400).end('bad request');
+const server = createServer((req, res) => {
+  const method = req.method || 'GET';
+  if (method !== 'GET' && method !== 'HEAD') {
+    res.writeHead(405, { 'content-type': 'text/plain' });
+    res.end('method not allowed\n');
     return;
   }
-  if (pathname.endsWith('/')) pathname += 'index.html';
-  const file = resolve(join(appRoot, normalize(pathname)));
-  if (file !== appRoot && !file.startsWith(appRoot + sep)) {
-    response.writeHead(403).end('forbidden');
+  let file = safePath(req.url || '/');
+  if (file === null) {
+    res.writeHead(400, { 'content-type': 'text/plain' });
+    res.end('bad path\n');
     return;
   }
-  let size;
-  try {
-    const stats = statSync(file);
-    if (!stats.isFile()) throw new Error('not a file');
-    size = stats.size;
-  } catch {
-    response.writeHead(404).end('not found');
+  if (existsSync(file) && statSync(file).isDirectory()) {
+    file = join(file, 'index.html');
+  }
+  if (!existsSync(file) || !statSync(file).isFile()) {
+    res.writeHead(404, { 'content-type': 'text/plain' });
+    res.end('not found\n');
+    console.log(`${method} ${req.url} -> 404`);
     return;
   }
-  response.writeHead(200, {
-    'content-type': mimeFor(file),
-    'content-length': size,
-    'cache-control': 'no-store',
+  const body = readFileSync(file);
+  res.writeHead(200, {
+    'content-type': TYPES[extname(file).toLowerCase()] || 'application/octet-stream',
+    'content-length': body.length,
   });
-  createReadStream(file).pipe(response);
+  res.end(method === 'HEAD' ? undefined : body);
+  console.log(`${method} ${req.url} -> 200 (${body.length} bytes)`);
 });
 
-const port = portFromArgs();
-server.listen(port, '127.0.0.1', () => {
-  console.log(`app/ is on http://localhost:${port}`);
+server.listen(PORT, () => {
+  console.log(`Vice Cover Studio serving ${ROOT} on http://localhost:${PORT}`);
 });
