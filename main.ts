@@ -1,55 +1,67 @@
-// Vice Cover Studio — entry builder.
+// Vice Cover Studio — hands the app in for the make.fun GTA 6 cover art
+// bounty (Node 22, standard library only). It copies app/ and screenshots/
+// from beside this file into the output directory and writes
+// /output/dossier.json, the summary the judge reads, with the vendored
+// make.fun library. Outside the grader's container, MAKEFUN_OUTPUT_DIR
+// stands in for /output:
+//   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 //
-// Copies app/ and screenshots/ into the output directory and writes the
-// dossier buildDossier derives from them, so what is handed in is exactly
-// what the scorer would derive from the same directory.
-//
-// Usage: node main.ts            (writes /output)
-//        MAKEFUN_OUTPUT_DIR=out node main.ts
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+// The output directory itself is never removed: the grader runs this file
+// as a user who can write inside /output but cannot delete the mount, so
+// deleting it would fail with EPERM. Only the directory's contents are
+// cleared, one entry at a time.
+
+import { chmodSync, cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-app.ts';
 
-const outDir = resolve(process.env.MAKEFUN_OUTPUT_DIR ?? '/output');
-const root = resolve(new URL('.', import.meta.url).pathname);
+const here = fileURLToPath(new URL('.', import.meta.url));
+const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
-// Fail fast on what buildDossier would refuse anyway, with a plain message.
-const shotsDir = resolve(root, 'screenshots');
-if (!existsSync(shotsDir)) throw new Error('missing screenshots/ next to main.ts');
-const shotFiles = readdirSync(shotsDir).filter((f) => /\.(png|jpe?g)$/i.test(f));
-if (shotFiles.length === 0) throw new Error('screenshots/ holds no image: the first is the cover');
-for (const f of shotFiles) {
-  const bytes = statSync(resolve(shotsDir, f)).size;
-  if (bytes > 262144) throw new Error(`screenshots/${f} is ${bytes} bytes, over the 262144 byte cap`);
+mkdirSync(out, { recursive: true });
+clearDir(out);
+
+function clearDir(dir) {
+  // One entry at a time, never the directory itself: the grader's /output
+  // is a mount its user may write in but may not remove (EPERM on rmSync).
+  // A previous run's copy may be read-only (cpSync keeps the source's
+  // modes), so make each child writable first, or its removal fails EACCES.
+  for (const entry of readdirSync(dir)) {
+    const path = resolve(dir, entry);
+    makeWritable(path);
+    rmSync(path, { recursive: true, force: true });
+  }
 }
 
-rmSync(outDir, { recursive: true, force: true });
-mkdirSync(outDir, { recursive: true });
-for (const name of ['app', 'screenshots']) {
-  const src = resolve(root, name);
-  if (!existsSync(src)) throw new Error(`missing ${name}/ next to main.ts`);
-  cpSync(src, resolve(outDir, name), { recursive: true });
+function makeWritable(path) {
+  try {
+    const st = statSync(path);
+    if (st.isDirectory()) {
+      for (const entry of readdirSync(path)) makeWritable(resolve(path, entry));
+    }
+    chmodSync(path, st.mode | 0o200);
+  } catch {
+    // Not our file to chmod: the removal below decides the outcome.
+  }
 }
 
-const dossier = buildDossier(outDir, {
+cpSync(join(here, 'app'), join(out, 'app'), { recursive: true });
+mkdirSync(join(out, 'screenshots'), { recursive: true });
+if (existsSync(join(here, 'screenshots'))) {
+  cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+}
+
+// The scorer's own caps (reference/gate.json): only text_max_bytes shapes the
+// bytes; the others refuse an entry the scorer would refuse (more than 4
+// screenshots or one over 256 KiB; more than 993 files in app/ or 48 MiB of
+// app files, in all, or a path under app/ over 1000 bytes).
+const DOSSIER_CAPS = {
   text_max_bytes: 163840,
   screenshots: { max: 4, max_bytes: 262144 },
   app_max_files: 993,
   app_max_bytes: 50331648,
   app_path_max_bytes: 1000,
-});
-const dossierPath = resolve(outDir, 'dossier.json');
-writeFileSync(dossierPath, dossier);
-console.log(`wrote ${dossierPath} (${dossier.length} bytes)`);
+};
 
-// Summary: how many entries the output holds, so a bad copy is visible.
-function countFiles(dir: string): number {
-  let n = 0;
-  for (const e of readdirSync(dir, { withFileTypes: true })) {
-    n += e.isDirectory() ? countFiles(resolve(dir, e.name)) : 1;
-  }
-  return n;
-}
-console.log(
-  `output holds ${countFiles(resolve(outDir, 'app'))} app entries and ${shotFiles.length} screenshots`,
-);
+writeFileSync(join(out, 'dossier.json'), buildDossier(out, DOSSIER_CAPS));

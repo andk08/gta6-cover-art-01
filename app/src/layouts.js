@@ -1,71 +1,36 @@
-// Vice Cover Studio — cover layouts.
-//
-// A layout maps a cover of size W x H to the panel rectangles it is made of.
-// Every rectangle is in cover pixels; the black gap between panels scales
-// with the cover so a thumbnail and a 1920px export look the same.
-'use strict';
-
-var VC = window.VC || (window.VC = {});
-
-function vcRect(x, y, w, h) {
-  return { x: x, y: y, w: w, h: h };
-}
-
-const LAYOUTS = {
+// Cover layouts. Every panel is a fraction of the cover rectangle
+// (x, y, w, h in 0..1), so the same layout works at any export size.
+export const LAYOUTS = {
   grid: {
     name: 'Vice Grid',
-    panels: 4,
-    areas: function (W, H) {
-      const g = Math.max(3, Math.round(W * 0.008));
-      const hw = (W - g) / 2;
-      const hh = (H - g) / 2;
-      return [
-        vcRect(0, 0, hw, hh),
-        vcRect(hw + g, 0, hw, hh),
-        vcRect(0, hh + g, hw, hh),
-        vcRect(hw + g, hh + g, hw, hh),
-      ];
-    },
+    panels: [
+      { x: 0, y: 0, w: 0.5, h: 0.5 },
+      { x: 0.5, y: 0, w: 0.5, h: 0.5 },
+      { x: 0, y: 0.5, w: 0.5, h: 0.5 },
+      { x: 0.5, y: 0.5, w: 0.5, h: 0.5 },
+    ],
   },
   hero: {
     name: 'Hero Strip',
-    panels: 4,
-    areas: function (W, H) {
-      const g = Math.max(3, Math.round(W * 0.008));
-      const heroH = H * 0.62;
-      const stripH = H - heroH - g;
-      const sw = (W - 2 * g) / 3;
-      return [
-        vcRect(0, 0, W, heroH),
-        vcRect(0, heroH + g, sw, stripH),
-        vcRect(sw + g, heroH + g, sw, stripH),
-        vcRect(2 * (sw + g), heroH + g, sw, stripH),
-      ];
-    },
+    panels: [
+      { x: 0, y: 0, w: 1, h: 0.62 },
+      { x: 0, y: 0.62, w: 1 / 3, h: 0.38 },
+      { x: 1 / 3, y: 0.62, w: 1 / 3, h: 0.38 },
+      { x: 2 / 3, y: 0.62, w: 1 / 3, h: 0.38 },
+    ],
   },
   triple: {
     name: 'Triple Split',
-    panels: 3,
-    areas: function (W, H) {
-      const g = Math.max(3, Math.round(W * 0.008));
-      const cw = (W - 2 * g) / 3;
-      return [
-        vcRect(0, 0, cw, H),
-        vcRect(cw + g, 0, cw, H),
-        vcRect(2 * (cw + g), 0, cw, H),
-      ];
-    },
+    panels: [
+      { x: 0, y: 0, w: 1 / 3, h: 1 },
+      { x: 1 / 3, y: 0, w: 1 / 3, h: 1 },
+      { x: 2 / 3, y: 0, w: 1 / 3, h: 1 },
+    ],
   },
   solo: {
     name: 'Solo Shot',
-    panels: 1,
-    areas: function (W, H) {
-      return [vcRect(0, 0, W, H)];
-    },
+    panels: [{ x: 0, y: 0, w: 1, h: 1 }],
   },
 };
 
-const LAYOUT_ORDER = ['grid', 'hero', 'triple', 'solo'];
-
-VC.LAYOUTS = LAYOUTS;
-VC.LAYOUT_ORDER = LAYOUT_ORDER;
+export const LAYOUT_IDS = Object.keys(LAYOUTS);

@@ -3,59 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vice Cover Studio — GTA 6-style cover art maker</title>
+<title>Vice Cover Studio — GTA 6-style cover maker</title>
+<style>
+@font-face {
+  font-family: 'Anton';
+  src: url('fonts/Anton-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+</style>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand"><span class="logo">VICE</span> COVER STUDIO</div>
-  <p class="tagline">Turn any photo into a Vice City cover</p>
+<header id="topbar">
+  <h1>VICE <span>COVER</span> STUDIO</h1>
+  <p>Turn your photos + a caption into a GTA 6-style cover poster.</p>
 </header>
-
-<div class="toolbar" id="toolbar">
-  <div class="group" id="layoutGroup" role="group" aria-label="Layout"></div>
-  <div class="group" id="gradeGroup" role="group" aria-label="Grade"></div>
-  <label class="export-size">Export
-    <select id="exportSize">
-      <option value="landscape">1920 × 1080</option>
-      <option value="portrait">1080 × 1350</option>
-      <option value="square">1080 × 1080</option>
-    </select>
-  </label>
-  <button id="exportBtn" class="btn primary" type="button">Export PNG</button>
-</div>
-
-<main class="workbench">
-  <section class="preview-wrap">
-    <canvas id="preview"></canvas>
-    <p class="hint">Drag a photo to reposition it &middot; use each panel&rsquo;s zoom slider to crop</p>
+<main id="editor">
+  <section class="stage">
+    <canvas id="cover" width="960" height="960"></canvas>
+    <p class="hint">Click a panel to select it, then drag the photo to move it. Scroll over a panel to zoom.</p>
   </section>
-  <aside class="controls" id="controls">
-    <section class="card caption-card">
-      <h2>Caption</h2>
-      <label>Title
-        <input id="titleInput" type="text" value="VICE CITY NIGHTS" maxlength="48">
-      </label>
-      <label>Subtitle
-        <input id="subInput" type="text" value="MY AGENT PAID THE BOUNTY" maxlength="48">
-      </label>
-      <label>Title size
-        <input id="titleSize" type="range" min="60" max="140" value="100">
-        <span id="titleSizeVal">100%</span>
-      </label>
+  <aside class="controls">
+    <section>
+      <h2>Layout</h2>
+      <div class="row" id="layoutRow"></div>
     </section>
-    <section class="card panels-card">
-      <h2>Photos <button id="fillAllBtn" class="btn small" type="button">Fill all panels</button></h2>
+    <section>
+      <h2>Grade</h2>
+      <div class="row" id="gradeRow"></div>
+    </section>
+    <section>
+      <h2>Photos</h2>
       <div id="panelList"></div>
+      <button id="fillAll" type="button">Fill all panels with panel 1's photo</button>
+    </section>
+    <section>
+      <h2>Caption</h2>
+      <label>Title <input id="titleInput" type="text" value="VICE CITY NIGHTS" maxlength="60"></label>
+      <label>Subtitle <input id="subInput" type="text" value="MY AGENT PAID THE BOUNTY" maxlength="60"></label>
+      <label>Title size <input id="titleSize" type="range" min="0.5" max="1.5" step="0.05" value="1"> <span id="titleSizeVal">100%</span></label>
+    </section>
+    <section>
+      <h2>Export</h2>
+      <label>Size
+        <select id="exportSize">
+          <option value="square">Square — 1080 × 1080</option>
+          <option value="portrait">Portrait — 1080 × 1350</option>
+          <option value="landscape">Landscape — 1920 × 1080</option>
+        </select>
+      </label>
+      <button id="exportBtn" type="button" class="primary">Export PNG</button>
+      <p id="status" class="status"></p>
     </section>
   </aside>
 </main>
-
-<footer class="foot">Runs fully offline. No Rockstar assets &mdash; every cover is built from your own photos.</footer>
-
-<script src="src/layouts.js"></script>
-<script src="src/grades.js"></script>
-<script src="src/cover.js"></script>
-<script src="src/main.js"></script>
+<script type="module" src="src/main.js"></script>
 </body>
 </html>
